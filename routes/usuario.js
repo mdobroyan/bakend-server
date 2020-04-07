@@ -2,8 +2,6 @@ var express = require('express');
 var bcryptjs = require('bcryptjs');
 var Usuario = require('../models/usuario');
 var autenticador = require('../middleware/autenticacion');
-var jwt = require('jsonwebtoken');
-var SEED = require('../config/config').SEED;
 var app = express();
 
 
@@ -15,7 +13,16 @@ var app = express();
 
 app.get('/', (req, resp, next) => {
 
-    Usuario.find({}, 'nombre email role img').exec((err, usuarios) => {
+
+    var desde = req.query.desde || 0;
+    desde = Number(desde);
+
+    Usuario.find({}, 'nombre email role img')
+
+    .skip(desde)
+        .limit(5)
+
+    .exec((err, usuarios) => {
 
         if (err) {
             return resp.status(500).json({
@@ -25,10 +32,19 @@ app.get('/', (req, resp, next) => {
             });
         }
 
-        resp.status(201).json({
-            ok: true,
-            usuarios: usuarios
+
+        Usuario.count({}, (err, conteo) => {
+
+
+            resp.status(201).json({
+                ok: true,
+                usuarios: usuarios,
+                total: conteo
+            });
+
+
         });
+
 
 
     });
